@@ -1,56 +1,69 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Card, CardBody, Checkbox, Input } from '@nextui-org/react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { authenticate } from '../../../actions/auth/actions'
-import PasswordField from '../PasswordField'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { authenticate, signIn } from '../../../actions/auth/actions'
 import { ProfileAction } from '../../../actions/profile/enum'
+import PasswordField from '../PasswordField'
+
+const loginSchema = z.object({
+    email: z.string().email({ message: 'Invalid email address' }),
+    password: z
+        .string()
+        .min(6, { message: 'Password must be at least 6 characters' }),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginContainer() {
-    const [formState, setFormState] = useState<{ message: string } | null>(null)
     const router = useRouter()
     const client = useQueryClient()
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
+    })
 
-    const [isLoading, setIsLoading] = useState(false)
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        setIsLoading(true)
-        const formData = new FormData(e.currentTarget)
-        const email = formData.get('email') as string
-        const password = formData.get('password') as string
-
-        const response = await authenticate(email, password)
-        if (response === null) {
+    const mutation = useMutation({
+        mutationFn: authenticate,
+        onSuccess: () => {
             client.invalidateQueries({
-                queryKey: [ProfileAction.getUser]
+                queryKey: [ProfileAction.getUser],
             })
             router.refresh()
-        } else {
-            setFormState(response)
-        }
+        },
+    })
 
-        setIsLoading(false)
+    const onSubmit = (data: LoginFormValues) => {
+        mutation.mutate(data)
     }
 
     return (
         <div className="flex items-center justify-center h-screen">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
                 <Card className="p-6 sm:min-w-[400px]">
                     <CardBody className="gap-3">
                         <Input
                             autoFocus
-                            name="email"
                             label="Email"
                             placeholder="Enter your email"
+                            {...register('email')}
+                            errorMessage={errors.email?.message}
                         />
                         <PasswordField
-                            name="password"
                             label="Password"
                             placeholder="Enter your password"
+                            otherProps={{
+                                ...register('password'),
+                                errorMessage: errors.password?.message,
+                            }}
                         />
                         <div className="flex flex-col py-2 px-1 sm:flex-row sm:justify-between">
                             <Checkbox
@@ -68,12 +81,14 @@ export default function LoginContainer() {
                             </Link>
                         </div>
 
-                        {formState?.message && (
-                            <p className="text-danger">{formState.message}</p>
+                        {mutation.isError && (
+                            <p className="text-danger">
+                                {mutation.error.message}
+                            </p>
                         )}
 
                         <Button
-                            isLoading={isLoading}
+                            isLoading={mutation.isPending}
                             type="submit"
                             fullWidth
                             color="secondary"

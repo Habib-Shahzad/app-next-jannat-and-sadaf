@@ -23,21 +23,18 @@ export async function signIn(credentials: Credentials) {
 
     await setAccessToken(token)
 }
-
-export async function authenticate(email: string, password: string) {
+export async function authenticate(data: Credentials) {
+    const { email, password } = data
     try {
         await signIn({ email, password })
         return null
     } catch (error: any) {
         const defaultMessage = 'Something went wrong.'
+        console.log('ERROR', error)
         if (error instanceof AxiosError) {
-            return {
-                message: error?.response?.data?.message ?? defaultMessage,
-            }
+            throw new Error(error.response?.data?.message ?? defaultMessage)
         }
-        return {
-            message: error?.message ?? defaultMessage,
-        }
+        throw new Error(defaultMessage)
     }
 }
 

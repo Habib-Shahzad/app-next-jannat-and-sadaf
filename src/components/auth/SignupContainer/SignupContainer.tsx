@@ -6,16 +6,39 @@ import { useMutation } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { signUp } from '../../../actions/auth/actions'
 import PasswordField from '../PasswordField'
+
+// Define the Zod schema
+const signupSchema = z
+    .object({
+        firstName: z.string().min(1, 'First name is required'),
+        lastName: z.string().min(1, 'Last name is required'),
+        email: z.string().email('Invalid email address'),
+        phone: z
+            .string()
+            .min(1, 'Phone number is required')
+            .regex(/^\d+$/, 'Phone number must be numeric'),
+        password: z.string().min(6, 'Password must be at least 6 characters'),
+        confirmPassword: z.string().min(6, 'Confirm password is required'),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords don't match",
+        path: ['confirmPassword'],
+    })
+
+type SignupFormValues = z.infer<typeof signupSchema>
 
 export default function SignupContainer() {
     const {
         handleSubmit,
         register,
-        watch,
         formState: { errors },
-    } = useForm<CreateUserInput>()
+    } = useForm<SignupFormValues>({
+        resolver: zodResolver(signupSchema),
+    })
     const [error, setError] = useState<boolean | null>(null)
     const signUpMutation = useMutation({
         mutationKey: ['signup'],
@@ -25,7 +48,7 @@ export default function SignupContainer() {
         },
     })
 
-    async function onSubmit(data: CreateUserInput) {
+    async function onSubmit(data: SignupFormValues) {
         setError(null)
         await signUpMutation.mutateAsync({
             ...data,
@@ -39,9 +62,7 @@ export default function SignupContainer() {
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <CardBody className="gap-3">
                         <Input
-                            {...register('firstName', {
-                                required: 'First name is required',
-                            })}
+                            {...register('firstName')}
                             radius={'md'}
                             type="text"
                             label="First Name"
@@ -49,13 +70,11 @@ export default function SignupContainer() {
                         />
                         {errors.firstName && (
                             <p className="text-danger text-sm">
-                                {errors.firstName.message as string}
+                                {errors.firstName.message}
                             </p>
                         )}
                         <Input
-                            {...register('lastName', {
-                                required: 'Last name is required',
-                            })}
+                            {...register('lastName')}
                             radius={'md'}
                             type="text"
                             label="Last Name"
@@ -63,14 +82,12 @@ export default function SignupContainer() {
                         />
                         {errors.lastName && (
                             <p className="text-danger text-sm">
-                                {errors.lastName.message as string}
+                                {errors.lastName.message}
                             </p>
                         )}
 
                         <Input
-                            {...register('email', {
-                                required: 'Email is required',
-                            })}
+                            {...register('email')}
                             radius={'md'}
                             type="email"
                             label="Email"
@@ -78,22 +95,20 @@ export default function SignupContainer() {
                         />
                         {errors.email && (
                             <p className="text-danger text-sm">
-                                {errors.email.message as string}
+                                {errors.email.message}
                             </p>
                         )}
 
                         <Input
-                            {...register('phone', {
-                                required: 'Phone number is required',
-                            })}
+                            {...register('phone')}
                             radius={'md'}
-                            type="phone"
+                            type="tel"
                             label="Phone Number"
                             placeholder="Enter your phone number"
                         />
                         {errors.phone && (
                             <p className="text-danger text-sm">
-                                {errors.phone.message as string}
+                                {errors.phone.message}
                             </p>
                         )}
 
@@ -101,14 +116,12 @@ export default function SignupContainer() {
                             label="Password"
                             placeholder="Enter your password"
                             otherProps={{
-                                ...register('password', {
-                                    required: 'Password is required',
-                                }),
+                                ...register('password'),
                             }}
                         />
                         {errors.password && (
                             <p className="text-danger text-sm">
-                                {errors.password.message as string}
+                                {errors.password.message}
                             </p>
                         )}
 
@@ -116,17 +129,12 @@ export default function SignupContainer() {
                             label="Confirm Password"
                             placeholder="Confirm your password"
                             otherProps={{
-                                ...register('confirmPassword', {
-                                    required: 'Confirm password is required',
-                                    validate: (value) =>
-                                        value === watch('password') ||
-                                        'The passwords do not match',
-                                }),
+                                ...register('confirmPassword'),
                             }}
                         />
                         {errors.confirmPassword && (
                             <p className="text-danger text-sm">
-                                {errors.confirmPassword.message as string}
+                                {errors.confirmPassword.message}
                             </p>
                         )}
 
