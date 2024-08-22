@@ -67,24 +67,17 @@ export default function SignupContainer() {
                             type="text"
                             label="First Name"
                             placeholder="Enter your first name"
+                            errorMessage={errors.firstName?.message}
                         />
-                        {errors.firstName && (
-                            <p className="text-danger text-sm">
-                                {errors.firstName.message}
-                            </p>
-                        )}
+
                         <Input
                             {...register('lastName')}
                             radius={'md'}
                             type="text"
                             label="Last Name"
                             placeholder="Enter your last name"
+                            errorMessage={errors.lastName?.message}
                         />
-                        {errors.lastName && (
-                            <p className="text-danger text-sm">
-                                {errors.lastName.message}
-                            </p>
-                        )}
 
                         <Input
                             {...register('email')}
@@ -92,12 +85,8 @@ export default function SignupContainer() {
                             type="email"
                             label="Email"
                             placeholder="Enter your email"
+                            errorMessage={errors.email?.message}
                         />
-                        {errors.email && (
-                            <p className="text-danger text-sm">
-                                {errors.email.message}
-                            </p>
-                        )}
 
                         <Input
                             {...register('phone')}
@@ -105,38 +94,26 @@ export default function SignupContainer() {
                             type="tel"
                             label="Phone Number"
                             placeholder="Enter your phone number"
+                            errorMessage={errors.phone?.message}
                         />
-                        {errors.phone && (
-                            <p className="text-danger text-sm">
-                                {errors.phone.message}
-                            </p>
-                        )}
 
                         <PasswordField
                             label="Password"
                             placeholder="Enter your password"
                             otherProps={{
                                 ...register('password'),
+                                errorMessage: errors.password?.message,
                             }}
                         />
-                        {errors.password && (
-                            <p className="text-danger text-sm">
-                                {errors.password.message}
-                            </p>
-                        )}
 
                         <PasswordField
                             label="Confirm Password"
                             placeholder="Confirm your password"
                             otherProps={{
                                 ...register('confirmPassword'),
+                                errorMessage: errors.confirmPassword?.message,
                             }}
                         />
-                        {errors.confirmPassword && (
-                            <p className="text-danger text-sm">
-                                {errors.confirmPassword.message}
-                            </p>
-                        )}
 
                         <Button
                             type="submit"
